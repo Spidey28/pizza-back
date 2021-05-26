@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: pizzahouse_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: docker
-    container_name: pizzahouse_db_cont
+    # container_name: pizzahouse_db_cont
     ports:
       - "15432:5432"
     volumes:
