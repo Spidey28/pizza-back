@@ -16,6 +16,17 @@ class Category(TimeStampedModel):
         return self.name
 
 
+class SubCategory(TimeStampedModel):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        verbose_name = "Sub Category"
+        verbose_name_plural = "Sub Categories"
+
+    def __str__(self):
+        return self.name
+
+
 class Size(TimeStampedModel):
     name = models.CharField(max_length=20, unique=True)
     amount = models.FloatField(default=0.0)
@@ -50,6 +61,11 @@ class Product(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="category"
     )
+    sub_category = models.ForeignKey(SubCategory,
+                                     on_delete=models.CASCADE,
+                                     null=True,
+                                     blank=True,
+                                     )
     name = models.CharField(max_length=255, unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     price = models.FloatField(default=0.0)
