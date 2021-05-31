@@ -235,3 +235,20 @@ class AddOn(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+class Topping(TimeStampedModel):
+    FOOD_CATEGORY_CHOICES = (
+        (FoodCategory.VEG, "Veg"),
+        (FoodCategory.NON_VEG, "Non Veg"),
+    )
+    name = models.CharField(max_length=50, unique=True)
+    amount = models.FloatField(default=0.0)
+    image = models.FileField(null=True, blank=True)
+    food_category = models.PositiveSmallIntegerField(
+        choices=FOOD_CATEGORY_CHOICES,
+        default=FoodCategory.VEG,
+    )
+
+    def __str__(self):
+        return self.name
