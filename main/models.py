@@ -1,6 +1,8 @@
 from django.db import models
+
 from main.base.models import TimeStampedModel
-from .types import FoodCategory, OrderStatus, PAYMENTINSTRUMENT, PAYMENTSTATUS
+
+from .types import PAYMENTINSTRUMENT, PAYMENTSTATUS, FoodCategory, OrderStatus
 
 
 class Category(TimeStampedModel):
@@ -56,17 +58,15 @@ class Product(TimeStampedModel):
         (FoodCategory.VEG, "Veg"),
         (FoodCategory.NON_VEG, "Non Veg"),
     )
-    category = models.ForeignKey(
-        Category,
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="category")
+    sub_category = models.ForeignKey(
+        SubCategory,
         on_delete=models.CASCADE,
-        related_name="category"
+        null=True,
+        blank=True,
     )
-    sub_category = models.ForeignKey(SubCategory,
-                                     on_delete=models.CASCADE,
-                                     null=True,
-                                     blank=True,
-                                     )
     name = models.CharField(max_length=255, unique=True, blank=True, null=True)
+    toppings = models.ManyToManyField("main.Topping", null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     price = models.FloatField(default=0.0)
     image = models.FileField(blank=True, null=True)
@@ -74,11 +74,12 @@ class Product(TimeStampedModel):
         choices=FOOD_CATEGORY_CHOICES,
         default=FoodCategory.VEG,
     )
-    size = models.ForeignKey(
-        Size, on_delete=models.CASCADE, null=True, blank=True)
-    crust = models.ForeignKey(
-        Crust, on_delete=models.CASCADE, null=True, blank=True)
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True, blank=True)
+    crust = models.ForeignKey(Crust, on_delete=models.CASCADE, null=True, blank=True)
     meta_data = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Address(TimeStampedModel):
@@ -97,12 +98,7 @@ class Customer(TimeStampedModel):
     name = models.CharField(max_length=50)
     mobile = models.CharField(max_length=13, blank=True, null=True)
     email = models.EmailField(null=True, blank=True)
-    address = models.OneToOneField(
-        Address,
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True
-    )
+    address = models.OneToOneField(Address, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -110,7 +106,7 @@ class Customer(TimeStampedModel):
 
 class Discount(TimeStampedModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    coupon_code = models.CharField(max_length=50)
+    coupon_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(default=0.0)
     valid_till_date = models.DateTimeField()
@@ -132,16 +128,12 @@ class Order(TimeStampedModel):
         "Customer",
         on_delete=models.CASCADE,
     )
-    status = models.PositiveSmallIntegerField(
-        choices=ORDER_STATUS_CHOICES,
-        default=OrderStatus.CART
-    )
+    status = models.PositiveSmallIntegerField(choices=ORDER_STATUS_CHOICES, default=OrderStatus.CART)
     amount = models.FloatField(default=0.0)
     tax = models.FloatField(default=0.0)
     total_amount = models.FloatField(default=0.0)
     reedeem_points = models.PositiveIntegerField(blank=True, null=True)
-    discount = models.ForeignKey(
-        Discount, on_delete=models.CASCADE, blank=True, null=True)
+    discount = models.ForeignKey(Discount, on_delete=models.CASCADE, blank=True, null=True)
     discounted_amount = models.FloatField(default=0.0)
 
 
@@ -150,28 +142,23 @@ class OrderItem(TimeStampedModel):
         Product,
         on_delete=models.CASCADE,
     )
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True
-    )
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1)
     amount = models.FloatField(default=0.0)
 
 
 class Payment(TimeStampedModel):
     PAYMENT_STATUS_CHOICES = (
-        (PAYMENTSTATUS.SUCCESS, 'Success'),
-        (PAYMENTSTATUS.PENDING, 'Pending'),
-        (PAYMENTSTATUS.FAILURE, 'Failure'),
-        (PAYMENTSTATUS.PAYMENT_DEDUCTED, 'Payment Deducted')
+        (PAYMENTSTATUS.SUCCESS, "Success"),
+        (PAYMENTSTATUS.PENDING, "Pending"),
+        (PAYMENTSTATUS.FAILURE, "Failure"),
+        (PAYMENTSTATUS.PAYMENT_DEDUCTED, "Payment Deducted"),
     )
     PAYMENT_INSTRUMENT_CHOICES = (
-        (PAYMENTINSTRUMENT.ONLINE, 'Online'),
-        (PAYMENTINSTRUMENT.UPI, 'UPI'),
-        (PAYMENTINSTRUMENT.CREDIT_CARD, 'Credit Card'),
-        (PAYMENTINSTRUMENT.DEBIT_CARD, 'Debit Card')
+        (PAYMENTINSTRUMENT.ONLINE, "Online"),
+        (PAYMENTINSTRUMENT.UPI, "UPI"),
+        (PAYMENTINSTRUMENT.CREDIT_CARD, "Credit Card"),
+        (PAYMENTINSTRUMENT.DEBIT_CARD, "Debit Card"),
     )
     order = models.OneToOneField(
         Order,
@@ -180,33 +167,17 @@ class Payment(TimeStampedModel):
     amount = models.FloatField(default=0.0)
     tax = models.FloatField(default=0.0)
     total_amount = models.FloatField(default=0.0)
-    payment_order_id = models.CharField(
-        max_length=32,
-        blank=True,
-        null=True,
-        unique=True
-    )
-    reference_id = models.CharField(
-        max_length=32,
-        blank=True,
-        null=True
-    )
-    status = models.PositiveSmallIntegerField(
-        choices=PAYMENT_STATUS_CHOICES,
-        default=PAYMENTSTATUS.PENDING
-    )
+    payment_order_id = models.CharField(max_length=32, blank=True, null=True, unique=True)
+    reference_id = models.CharField(max_length=32, blank=True, null=True)
+    status = models.PositiveSmallIntegerField(choices=PAYMENT_STATUS_CHOICES, default=PAYMENTSTATUS.PENDING)
     instrument_type = models.PositiveSmallIntegerField(
-        choices=PAYMENT_INSTRUMENT_CHOICES,
-        default=PAYMENTINSTRUMENT.ONLINE
+        choices=PAYMENT_INSTRUMENT_CHOICES, default=PAYMENTINSTRUMENT.ONLINE
     )
     payment_date = models.DateTimeField(blank=True, null=True)
     payment_success_date = models.DateField(blank=True, null=True)
     payment_url = models.URLField(max_length=2048, blank=True, null=True)
     payment_gateway_response = models.TextField(null=True, blank=True)
-    payment_receipt = models.FileField(
-        blank=True,
-        null=True
-    )
+    payment_receipt = models.FileField(blank=True, null=True)
 
 
 class FoodPoint(TimeStampedModel):
@@ -219,22 +190,22 @@ class FoodPoint(TimeStampedModel):
     referral_points = models.PositiveIntegerField(blank=True, null=True)
 
 
-class AddOn(TimeStampedModel):
-    FOOD_CATEGORY_CHOICES = (
-        (FoodCategory.VEG, "Veg"),
-        (FoodCategory.NON_VEG, "Non Veg"),
-    )
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    amount = models.FloatField(default=0.0)
-    image = models.FileField(null=True, blank=True)
-    food_category = models.PositiveSmallIntegerField(
-        choices=FOOD_CATEGORY_CHOICES,
-        default=FoodCategory.VEG,
-    )
+# class AddOn(TimeStampedModel):
+#     FOOD_CATEGORY_CHOICES = (
+#         (FoodCategory.VEG, "Veg"),
+#         (FoodCategory.NON_VEG, "Non Veg"),
+#     )
+#     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+#     name = models.CharField(max_length=50)
+#     amount = models.FloatField(default=0.0)
+#     image = models.FileField(null=True, blank=True)
+#     food_category = models.PositiveSmallIntegerField(
+#         choices=FOOD_CATEGORY_CHOICES,
+#         default=FoodCategory.VEG,
+#     )
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Topping(TimeStampedModel):
@@ -242,6 +213,7 @@ class Topping(TimeStampedModel):
         (FoodCategory.VEG, "Veg"),
         (FoodCategory.NON_VEG, "Non Veg"),
     )
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, unique=True)
     amount = models.FloatField(default=0.0)
     image = models.FileField(null=True, blank=True)

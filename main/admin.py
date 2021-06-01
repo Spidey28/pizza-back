@@ -1,7 +1,20 @@
 from django.contrib import admin
-from .models import (Category, Size, Crust, Product, Address,
-                     Customer, Discount, Order, OrderItem, Payment,
-                     FoodPoint, AddOn, SubCategory)
+
+from .models import (
+    Address,
+    Category,
+    Crust,
+    Customer,
+    Discount,
+    FoodPoint,
+    Order,
+    OrderItem,
+    Payment,
+    Product,
+    Size,
+    SubCategory,
+    Topping,
+)
 
 
 @admin.register(Category)
@@ -59,11 +72,16 @@ class FoodPointAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(AddOn)
-class AddOnAdmin(admin.ModelAdmin):
-    pass
+# @admin.register(AddOn)
+# class AddOnAdmin(admin.ModelAdmin):
+#     pass
 
 
 @admin.register(SubCategory)
 class SubCategoryAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Topping)
+class ToppingAdmin(admin.ModelAdmin):
     pass
